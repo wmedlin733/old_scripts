@@ -1,0 +1,32 @@
+#!/usr/bin/bash
+### Checks who -r output for run level changes
+
+LOG=/home/wmedlin/bin/runlevel.log
+HN=`/usr/bin/hostname`
+### Last run level kept in file
+LRL_FILE=/home/wmedlin/bin/last_runlevel
+LRL=`cat $LRL_FILE`
+### New run level
+NRL=`who -r | awk '{ print $3 }'`
+
+MAILLIST="\
+  9014774388@page.metrocall.com \
+  william.medlin@usps.gov \
+"
+#  9013923419@page.metrocall.com \
+#  alan.wells@usps.gov \
+#  9017214675@page.metrocall.com \
+#  9014774389@page.metrocall.com \
+#  9013929344@page.metrocall.com \
+#  9013922336@my2way.com \
+#  9013922337@my2way.com \
+#  9014775196@page.metrocall.com \
+#  9014775195@page.metrocall.com \
+
+[ $LRL -eq $NRL ] && exit 0
+[ $LRL -ne $NRL ] && {
+ echo "`date`:  runlevel $LRL has changed to $NRL" >> $LOG
+ echo "." | mailx -s "$HN runlevel has changed from $LRL to $NRL" $MAILLIST
+ echo $NRL > $LRL_FILE
+ exit 1
+}
