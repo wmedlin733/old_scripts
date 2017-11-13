@@ -1,0 +1,39 @@
+#!/usr/bin/expect --
+# CDCI sftp upload script
+
+# Timeout set to fifteen minutes
+set timeout 900
+
+spawn /usr/bin/sftp USPSFtpUser@64.56.107.197
+while {1} {
+    expect timeout { 
+        puts "\nTimeout waiting for password prompt"
+        exit 1 
+    } "(yes/no)?*" {
+        send "yes\r"
+    } word: {
+        break
+    }
+}
+send "cd\#ps4S\r"
+log_user 0
+expect {
+          timeout { puts "\nPassword failure - timeout"; exit 1 }
+          "word: " { puts "\nPassword failure - wrong password"; exit 1 }
+          "p>"
+}
+puts "\nPassword accepted.  Transferring data."
+send "lcd /home/cdci\r"
+expect "p>"
+send "mput cddata.zip.gpg\r"
+expect {
+          timeout { puts "\nTransfer failure - timeout"; exit 1 }
+          "p>"
+}
+log_user 1
+send "pwd\r"
+expect "tp>"
+send "ls -l\r"
+expect "tp>"
+send "quit\r"
+exit 0
