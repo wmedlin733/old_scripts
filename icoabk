@@ -1,0 +1,43 @@
+#!/bin/sh
+
+PATH=/usr/bin:/usr/local/bin:/opt/mgicoa/eod; export PATH
+EODPATH=/opt/mgicoa/eod
+
+mailaddr="jaria.sharkey@usps.gov 9013929344@page.metrocall.com 9014479893@page.metrocall.com 9014774388@page.metrocall.com 9014775586@page.metrocall.com mgmonitor@imagitas.com"
+
+   icoaps=`ps -ef|grep ora_pmon_ICOA | grep -v grep | awk '{print $2}'`
+   while [ ! -f $EODPATH/EODP_* ] && "$icoaps" != "" 
+     do
+        sleep 1800 
+        icoaps=`ps -ef|grep ora_pmon_ICOA | grep -v grep | awk '{print $2}'`
+     done;
+
+   ECount=`ls -F $EODPATH/EODP_* | wc | awk '{print $1}'`
+   if [ "$ECount" -gt 1 ]; then
+        echo "`date` `hostname`: too many data files for processing!!!" >> $EODPATH/icoabk.log
+        echo "`hostname`: too many data files for processing!!!" | mailx -v -s "ICOA EOD" $mailaddr
+    exit 1
+   fi
+
+   if [ -f $EODPATH/eodpfile.zip ]; then 
+    echo "`date` `hostname`: eodpfile not processed from yesterday!!!" >> $EODPATH/icoabk.log
+    echo "`hostname`: eodpfile not processed from yesterday!!!" | mailx -v -s "ICOA EOD" $mailaddr
+   exit 1
+   fi 
+Status=`tail -1 $EODPATH/EODP_* |grep "PC" |awk '{ print $1 }'`
+         if [ -f $EODPATH/EODP_* -a "$Status" = "PC" ]; then
+                cd $EODPATH
+                #cp EODP_* eodpfile.zip
+                /usr/local/bin/pkzip -add eodpfile EODP_*
+                #/usr/local/bin/pkzip -add eodpfile.zip eodpfile.zip
+                chgrp mgftp $EODPATH/eodpfile.zip
+                chmod g+w $EODPATH/eodpfile.zip
+                mv EODP_* archive
+                echo "`date` `hostname`: ICOA process Completed!!!!!!!" >> $EODPATH/icoabk.log
+                echo "`hostname`: ICOA process Completed!!!!!!!" | mailx -v -s "ICOA EOD" $mailaddr
+         else
+                echo "`date` `hostname`: Data file missing or ICOA instance not found !!!!!" >> $EODPATH/icoabk.log
+                echo "`hostname`: Data file missing or ICOA instance not found" | mailx -v -s "ICOA EOD" $mailaddr 
+fi
+echo Return Code: 0
+exit 0
