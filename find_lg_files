@@ -1,0 +1,7 @@
+find / -xdev -type f -print | xargs ls -ld | sort -rn -k 5
+-or-
+cd /filesystem_in_question
+du -kx | sort -rn | more
+-or-
+to search within one fs:
+/usr/bin/du -d /
