@@ -1,0 +1,8 @@
+on box a:
+ssh-keygen -t dsa (hit enter three times)
+scp .ssh/id_dsa.pub to the remote host (box b)
+
+on box b:
+cat id_dsa.pub >> .ssh/authorized_keys
+
+now when logging into box b from box a, no password is required
